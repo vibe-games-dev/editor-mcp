@@ -1,16 +1,28 @@
 {
-  "name": "vibe-games-editor-mcp",
+  "name": "@vibegames/editor-mcp",
   "version": "0.0.1",
   "type": "module",
   "description": "Local MCP server that bridges external MCP clients to the Vibe Games browser editor over a WebSocket.",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
     "vibe-games-editor-mcp": "./dist/index.js"
   },
   "main": "./dist/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "tsx src/index.ts",
     "inspect": "npx @modelcontextprotocol/inspector -e PORT=8765 -e EDITOR_MCP_TOKEN=dev tsx src/index.ts",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && chmod +x dist/index.js",
+    "prepublishOnly": "npm run build",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test 'src/**/*.test.ts'"

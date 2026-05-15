@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { createMcpServer } from "./mcpServer.js";
 import { WsBridge } from "./wsBridge.js";
 
@@ -20,6 +22,13 @@ const main = async () => {
 
   const bridge = new WsBridge(port, token);
   await bridge.waitUntilReady();
+
+  const shutdown = async () => {
+    await bridge.close();
+    process.exit(0);
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 
   const mcp = createMcpServer(bridge);
   await mcp.start();

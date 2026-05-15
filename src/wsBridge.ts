@@ -37,6 +37,7 @@ export class WsBridge {
   private readonly ready: Promise<void>;
   private readonly callTimeoutMs: number;
   private toolsChangedHandler: (() => void) | null = null;
+  private firstToolsResolved = false;
 
   constructor(port: number, token: string, callTimeoutMs: number = DEFAULT_CALL_TIMEOUT_MS) {
     this.callTimeoutMs = callTimeoutMs;
@@ -100,6 +101,10 @@ export class WsBridge {
     return this.tools;
   }
 
+  hasReceivedTools(): boolean {
+    return this.firstToolsResolved;
+  }
+
   call(name: string, input: Record<string, unknown>): Promise<unknown> {
     const ws = this.client;
     if (!ws || ws.readyState !== WebSocket.OPEN) {
@@ -140,6 +145,7 @@ export class WsBridge {
       if (this.client !== ws) return;
       this.client = null;
       this.tools = [];
+      this.firstToolsResolved = false;
       this.rejectAllPending(new Error("Editor disconnected"));
       console.error("[vibe-games-editor-mcp] editor disconnected");
       this.toolsChangedHandler?.();
@@ -161,6 +167,7 @@ export class WsBridge {
     switch (msg.type) {
       case "tools_changed":
         this.tools = msg.tools;
+        this.firstToolsResolved = true;
         this.toolsChangedHandler?.();
         break;
       case "result":

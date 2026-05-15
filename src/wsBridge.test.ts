@@ -214,4 +214,29 @@ test("tools_changed updates getTools and fires handler", async (ctx) => {
   await fired;
   assert.equal(bridge.getTools().length, 1);
   assert.equal(bridge.getTools()[0].name, "foo");
+  assert.equal(bridge.hasReceivedTools(), true);
+});
+
+test("disconnect resets announced tools state", async (ctx) => {
+  const { bridge, port } = await makeBridge();
+  ctx.after(() => bridge.close());
+
+  const client = await connect(port);
+
+  const fired = new Promise<void>((resolve) => bridge.onToolsChanged(() => resolve()));
+  client.send(
+    JSON.stringify({
+      type: "tools_changed",
+      tools: [{ name: "foo", description: "d", inputSchema: { type: "object" } }],
+    }),
+  );
+  await fired;
+  assert.equal(bridge.hasReceivedTools(), true);
+
+  const disconnected = new Promise<void>((resolve) => bridge.onToolsChanged(() => resolve()));
+  client.terminate();
+  await disconnected;
+
+  assert.equal(bridge.getTools().length, 0);
+  assert.equal(bridge.hasReceivedTools(), false);
 });
