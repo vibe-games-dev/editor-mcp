@@ -5,6 +5,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { mcpTools } from "./tools.js";
+import { toToolResultContent } from "./toolResult.js";
 import type { WsBridge } from "./wsBridge.js";
 
 export const createMcpServer = (bridge: WsBridge) => {
@@ -21,9 +22,7 @@ export const createMcpServer = (bridge: WsBridge) => {
     const { name, arguments: args } = req.params;
     try {
       const output = await bridge.call(name, args ?? {});
-      return {
-        content: [{ type: "text" as const, text: JSON.stringify(output) }],
-      };
+      return { content: toToolResultContent(output) };
     } catch (err) {
       return {
         isError: true,
