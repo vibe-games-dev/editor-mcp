@@ -1,11 +1,6 @@
-import type { Tool } from "@modelcontextprotocol/sdk/types.js";
+import type { ToolAnnouncement } from "./protocol.js";
 
-export type McpToolDefinition = Pick<
-  Tool,
-  "name" | "description" | "inputSchema" | "annotations"
->;
-
-export const mcpTools: McpToolDefinition[] = [
+export const mcpTools: ToolAnnouncement[] = [
   {
     name: "capture_scene",
     description:

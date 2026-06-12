@@ -1,37 +1,52 @@
 #!/usr/bin/env node
 
+import { startBroker } from "./broker.js";
+import { BrokerClient } from "./brokerClient.js";
 import { createMcpServer } from "./mcpServer.js";
-import { WsBridge } from "./wsBridge.js";
+import {
+  BROKER_SUBCOMMAND,
+  DEFAULT_BROKER_HOST,
+  DEFAULT_BROKER_PORT,
+  DEFAULT_CALL_TIMEOUT_MS,
+  numEnv,
+} from "./protocol.js";
 
-const main = async () => {
-  const port = Number(process.env.PORT);
-  const token = process.env.EDITOR_MCP_TOKEN;
-
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+const startAdapter = async () => {
+  const session = process.env.VIBEGAMES_MCP_SESSION;
+  if (!session) {
     console.error(
-      "[vibe-games-editor-mcp] PORT env var is required and must be an integer between 1 and 65535.",
+      "[adapter] VIBEGAMES_MCP_SESSION env var is required. Generate the launch command in the Vibe Games editor.",
     );
     process.exit(1);
   }
-  if (!token) {
-    console.error(
-      "[vibe-games-editor-mcp] EDITOR_MCP_TOKEN env var is required. Generate the command in the Vibe Games editor.",
-    );
-    process.exit(1);
-  }
 
-  const bridge = new WsBridge(port, token);
-  await bridge.waitUntilReady();
+  const host = process.env.VIBEGAMES_MCP_HOST ?? DEFAULT_BROKER_HOST;
+  const port = numEnv("VIBEGAMES_MCP_PORT") ?? DEFAULT_BROKER_PORT;
+  const callTimeoutMs =
+    numEnv("VIBEGAMES_MCP_CALL_TIMEOUT_MS") ?? DEFAULT_CALL_TIMEOUT_MS;
 
-  const shutdown = async () => {
-    await bridge.close();
+  const client = new BrokerClient(host, port, session, callTimeoutMs);
+
+  const shutdown = () => {
+    client.close();
     process.exit(0);
   };
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 
-  const mcp = createMcpServer(bridge);
+  // Connect stdio before dialing the broker, so a tool announcement can't fire
+  // a list-changed notification before the transport is ready.
+  const mcp = createMcpServer(client);
   await mcp.start();
+  client.start();
+};
+
+const main = async () => {
+  if (process.argv[2] === BROKER_SUBCOMMAND) {
+    await startBroker();
+    return;
+  }
+  await startAdapter();
 };
 
 main().catch((err) => {

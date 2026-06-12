@@ -4,18 +4,18 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import type { Bridge } from "./protocol.js";
 import { mcpTools } from "./tools.js";
 import { toToolResultContent } from "./toolResult.js";
-import type { WsBridge } from "./wsBridge.js";
 
-export const createMcpServer = (bridge: WsBridge) => {
+export const createMcpServer = (bridge: Bridge) => {
   const server = new Server(
     { name: "vibe-games-editor-mcp", version: "0.0.1" },
     { capabilities: { tools: { listChanged: true } } },
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return { tools: bridge.hasReceivedTools() ? bridge.getTools() : mcpTools };
+    return { tools: bridge.getTools() ?? mcpTools };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
@@ -36,7 +36,10 @@ export const createMcpServer = (bridge: WsBridge) => {
     }
   });
 
-  bridge.onToolsChanged(() => server.sendToolListChanged());
+  bridge.onToolsChanged(() => {
+    // A notification fired before connect / after close must not crash us.
+    void Promise.resolve(server.sendToolListChanged()).catch(() => {});
+  });
 
   return {
     start: () => server.connect(new StdioServerTransport()),

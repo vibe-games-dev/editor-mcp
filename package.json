@@ -20,7 +20,8 @@
   },
   "scripts": {
     "dev": "tsx src/index.ts",
-    "inspect": "npx @modelcontextprotocol/inspector -e PORT=8765 -e EDITOR_MCP_TOKEN=dev tsx src/index.ts",
+    "dev:broker": "tsx src/index.ts broker",
+    "inspect": "npx @modelcontextprotocol/inspector -e VIBEGAMES_MCP_SESSION=dev tsx src/index.ts",
     "build": "rm -rf dist && tsc -p tsconfig.build.json && chmod +x dist/index.js",
     "prepublishOnly": "npm run build",
     "start": "node dist/index.js",
