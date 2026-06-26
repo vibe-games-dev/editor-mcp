@@ -5,6 +5,7 @@ import {
   type Bridge,
   BROKER_SUBCOMMAND,
   CLOSE,
+  type ClientInfo,
   createLog,
   RECONNECT_MAX_MS,
   RECONNECT_MIN_MS,
@@ -67,6 +68,7 @@ export class BrokerClient implements Bridge {
   // null = the editor has not announced its tools yet (fall back to defaults).
   private tools: ToolAnnouncement[] | null = null;
   private editorConnected = false;
+  private clientInfo: ClientInfo | null = null;
   private closed = false;
   private reconnectMs = RECONNECT_MIN_MS;
   private lastSpawnAt = 0;
@@ -96,6 +98,18 @@ export class BrokerClient implements Bridge {
 
   getTools(): ToolAnnouncement[] | null {
     return this.tools;
+  }
+
+  setClientInfo(info: ClientInfo): void {
+    this.clientInfo = info;
+    this.sendClientInfo();
+  }
+
+  private sendClientInfo(): void {
+    const ws = this.ws;
+    if (!this.editorConnected || !this.clientInfo || ws?.readyState !== WebSocket.OPEN)
+      return;
+    ws.send(JSON.stringify({ type: "client_info", ...this.clientInfo }));
   }
 
   isPaired(): boolean {
@@ -208,7 +222,9 @@ export class BrokerClient implements Bridge {
   private setEditorConnected(connected: boolean) {
     if (this.editorConnected === connected) return;
     this.editorConnected = connected;
-    if (!connected) {
+    if (connected) {
+      this.sendClientInfo();
+    } else {
       this.tools = null;
       this.rejectAllPending(new Error("Editor disconnected"));
       this.toolsChangedHandler?.();

@@ -28,23 +28,20 @@ export type ToolAnnouncement = Pick<
   "name" | "description" | "inputSchema" | "annotations"
 >;
 
-// The only frames the broker authors; everything else it forwards opaquely.
 export type ControlMessage =
   | { type: "ready"; peerConnected: boolean }
   | { type: "peer_connected" }
   | { type: "peer_disconnected" };
 
-// Editor <-> adapter frames are relayed and validated at the endpoints, so they
-// have no type here. They must not reuse a ControlMessage `type`.
+export type ClientInfo = { name: string; version?: string };
 
 export interface Bridge {
-  // null until the editor announces its tools, so callers can fall back.
   getTools(): ToolAnnouncement[] | null;
   onToolsChanged(handler: () => void): void;
   call(name: string, input: Record<string, unknown>): Promise<unknown>;
+  setClientInfo(info: ClientInfo): void;
 }
 
-// Prefixed stderr logger, e.g. createLog("broker")("listening").
 export const createLog =
   (prefix: string) =>
   (msg: string): void =>

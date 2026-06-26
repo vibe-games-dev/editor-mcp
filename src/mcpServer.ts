@@ -36,6 +36,11 @@ export const createMcpServer = (bridge: Bridge) => {
     }
   });
 
+  server.oninitialized = () => {
+    const info = server.getClientVersion();
+    if (info?.name) bridge.setClientInfo({ name: info.name, version: info.version });
+  };
+
   bridge.onToolsChanged(() => {
     // A notification fired before connect / after close must not crash us.
     void Promise.resolve(server.sendToolListChanged()).catch(() => {});
