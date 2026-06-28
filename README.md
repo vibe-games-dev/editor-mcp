@@ -1,18 +1,22 @@
 # @vibegames/editor-mcp
 
-Use MCP clients like Claude Code or Codex with the [vibe-games.ai](https://vibe-games.ai) browser editor, so the editor's tools are available directly in your coding assistant.
+Use MCP clients like Claude Code or Codex with the [vibe-games.ai](https://vibe-games.ai) browser editor to build games — your coding assistant drives the editor directly through its tools.
 
 Several editor tabs and several MCP clients can run at once and stay paired by a per-tab session token, without their tool calls crossing over.
 
 ## Setup
 
-1. Open [vibe-games.ai](https://vibe-games.ai).
-2. Go to **Settings → AI → MCP**.
-3. Choose **Claude Code** or **Codex**.
-4. Paste the generated command into your shell.
-5. Restart the MCP client.
+1. Open the [vibe-games.ai editor](https://vibe-games.ai/editor/playground).
+2. Open **Settings**, go to the **AI** tab, and turn on **Local MCP Server**.
+3. Pick your agent — **Claude** or **Codex**.
+4. Run the two generated commands in your shell: the first installs the MCP server (once), the second starts a session with that tab's token.
+5. The **Connect Agent** badge in the chat header shows your agent with a green dot once it connects.
 
-## MCP client config
+For screenshots, browser support, and troubleshooting, see the [full setup guide](https://vibe-games.ai/docs/ai-setup/local-mcp).
+
+## MCP client config (reference)
+
+You normally don't write this by hand — the editor generates these commands for you with the token filled in (see [Setup](#setup)). It's here only so you know what's being added.
 
 The only required value is `VIBEGAMES_MCP_SESSION`, generated per editor tab.
 
