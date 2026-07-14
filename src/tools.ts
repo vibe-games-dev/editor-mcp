@@ -436,4 +436,17 @@ export const mcpTools: ToolAnnouncement[] = [
       idempotentHint: true,
     },
   },
+  {
+    name: "get_editor_context",
+    description:
+      "Get a point-in-time snapshot of the user's active scene, selected object, and editor camera. Call before actions that depend on this state; call again only if it may have changed since the last snapshot.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+    annotations: {
+      readOnlyHint: true,
+    },
+  },
 ];
