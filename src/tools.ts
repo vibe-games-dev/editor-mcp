@@ -150,7 +150,7 @@ export const mcpTools: ToolAnnouncement[] = [
   {
     name: "import_asset",
     description:
-      "Import a searched asset into the current project using candidateId from search_assets.",
+      "Commit a candidate (from search_assets or generate_object) into the project's asset library, returning an assetId. Then place it with edit_project using a mesh component of type 'model' referencing the assetId.",
     inputSchema: {
       type: "object",
       properties: {
@@ -325,7 +325,7 @@ export const mcpTools: ToolAnnouncement[] = [
   {
     name: "generate_object",
     description:
-      "Generate a 3D object asset using Three.js code. The function signature must be: generateObject(THREE) returning THREE.Object3D. Only use built-in THREE classes (BufferGeometry, MeshStandardMaterial, Mesh, Group, etc). External imports, loaders, and textures are NOT available.",
+      "Generate a 3D object candidate from Three.js code. Signature must be: generateObject(THREE) returning THREE.Object3D, using only built-in THREE classes (no imports, loaders, or textures). Returns a candidateId; adds nothing to the project until import_asset(candidateId) commits it, so regenerate freely without leaving orphans. Set preview:true for a thumbnail plus dimensions (bounding box, world units) to check shape, scale, and color first.",
     inputSchema: {
       type: "object",
       properties: {
@@ -337,6 +337,9 @@ export const mcpTools: ToolAnnouncement[] = [
         code: {
           type: "string",
           description: "JavaScript code defining generateObject(THREE)",
+        },
+        preview: {
+          type: "boolean",
         },
       },
       required: ["name", "code"],
