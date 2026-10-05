@@ -7,6 +7,8 @@ export const DEFAULT_HEARTBEAT_MS = 30_000;
 export const DEFAULT_CALL_TIMEOUT_MS = 60_000;
 // Generous: editor results can carry base64 screenshots.
 export const MAX_FRAME_BYTES = 32 * 1024 * 1024;
+// Base64 adds a third, so an imported file must stay well below MAX_FRAME_BYTES.
+export const MAX_IMPORT_FILE_BYTES = 20_000_000;
 
 export const RECONNECT_MIN_MS = 500;
 export const RECONNECT_MAX_MS = 10_000;

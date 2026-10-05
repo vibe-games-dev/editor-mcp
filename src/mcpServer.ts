@@ -4,9 +4,12 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { toEditorInput, toPathImportTool } from "./importFile.js";
 import type { Bridge } from "./protocol.js";
 import { mcpTools } from "./tools.js";
 import { toToolResultContent } from "./toolResult.js";
+
+const IMPORT_FILE_TOOL = "import_file";
 
 export const createMcpServer = (bridge: Bridge) => {
   const server = new Server(
@@ -15,13 +18,17 @@ export const createMcpServer = (bridge: Bridge) => {
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return { tools: bridge.getTools() ?? mcpTools };
+    const tools = bridge.getTools() ?? mcpTools;
+    return {
+      tools: tools.map((tool) => (tool.name === IMPORT_FILE_TOOL ? toPathImportTool(tool) : tool)),
+    };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const { name, arguments: args } = req.params;
     try {
-      const output = await bridge.call(name, args ?? {});
+      const input = name === IMPORT_FILE_TOOL ? await toEditorInput(args ?? {}) : (args ?? {});
+      const output = await bridge.call(name, input);
       return { content: toToolResultContent(output) };
     } catch (err) {
       return {
