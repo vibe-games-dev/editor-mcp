@@ -354,36 +354,29 @@ export const mcpTools: ToolAnnouncement[] = [
   {
     name: "test_game",
     description:
-      "Run the game for a window of time and report what happened. Use this to verify runtime behavior — scripts executing, physics, animations. The game runs for `durationMs`; during that window console messages are collected and at the end a screenshot is taken. Each capture flag controls one piece of the result.",
+      'Run an async driver script that plays the game. The script runs in a sandbox while the game runs. Use it to verify runtime behavior: scripts, physics, animations.\n\nThe driver does not read game state. To check state, add a temporary script to an object with edit_project. The script reads ctx and reports with ctx.send("test:...", payload). Send once for each event, not in each update, because the driver gets queued messages oldest first. Only "test:" messages pass between the driver and the scripts. Remove the temporary script after the test.\n\nAvailable in the driver:\n- await game.start() - start the game. It resolves when the scene is ready.\n- await game.stop() - stop the game.\n- game.send(type, payload?) - send a "test:" message to the game scripts. Send after game.start() resolves. Scripts get it in onMessage on the next update, not in init.\n- await game.waitForMessage(type, { timeoutMs? }) - get the oldest queued "test:" message of this type from the game scripts, or wait for one. It resolves with { type, payload }. Without timeoutMs, a failed wait ends only at the run timeout.\n- await screenshot({ label? }) - capture the running game. It resolves with a screenshot id, which you can return with other data. Maximum 4 for each run.\n- await sleep(ms) - wait in real time.\n- return value - the data of the test result.\n\nThe result has success, data (the return value) or error, console, and screenshots ({ id, label }). The images follow in the same order.\n\nExample:\nawait game.start();\nconst { payload } = await game.waitForMessage("test:landed", { timeoutMs: 5000 });\nreturn payload;',
     inputSchema: {
       type: "object",
       properties: {
-        durationMs: {
-          default: 1000,
+        description: {
+          type: "string",
+          minLength: 1,
+          description: "Short plain-language summary of what this test checks.",
+        },
+        code: {
+          type: "string",
+          description: "Async driver script. Top-level await and return are allowed.",
+        },
+        timeoutMs: {
+          default: 30000,
           description:
-            "How long the game runs. Logs are collected for this entire window.",
+            "Maximum duration of the run. The tool stops the script and the game at the limit.",
           type: "integer",
-          minimum: 100,
-          maximum: 10000,
-        },
-        screenshot: {
-          default: true,
-          description: "Capture a screenshot at the end of the run.",
-          type: "boolean",
-        },
-        errors: {
-          default: true,
-          description: "Capture script errors emitted during the run.",
-          type: "boolean",
-        },
-        logs: {
-          default: false,
-          description:
-            "Capture info/warning console messages. Can be noisy for chatty scripts.",
-          type: "boolean",
+          minimum: 1000,
+          maximum: 60000,
         },
       },
-      required: ["durationMs", "screenshot", "errors", "logs"],
+      required: ["description", "code", "timeoutMs"],
       additionalProperties: false,
     },
     annotations: {
