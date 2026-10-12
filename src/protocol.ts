@@ -1,28 +1,14 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
-export const DEFAULT_BROKER_HOST = "127.0.0.1";
-export const DEFAULT_BROKER_PORT = 7777;
-export const DEFAULT_IDLE_MS = 15 * 60_000;
-export const DEFAULT_HEARTBEAT_MS = 30_000;
-export const DEFAULT_CALL_TIMEOUT_MS = 60_000;
 // Generous: editor results can carry base64 screenshots.
 export const MAX_FRAME_BYTES = 32 * 1024 * 1024;
 // Base64 adds a third, so an imported file must stay well below MAX_FRAME_BYTES.
 export const MAX_IMPORT_FILE_BYTES = 20_000_000;
 
-export const RECONNECT_MIN_MS = 500;
-export const RECONNECT_MAX_MS = 10_000;
-
-export type Role = "editor" | "agent";
-
-// CLI subcommand that runs the broker. Shared so the adapter's autostart argv
-// and the entry-point dispatch can never drift apart.
-export const BROKER_SUBCOMMAND = "broker";
-
 export const CLOSE = {
-  PROTOCOL_ERROR: 4000,
-  DUPLICATE_ROLE: 4002,
-  BROKER_SHUTDOWN: 4004,
+  INVALID_CODE: 4001,
+  SHUTDOWN: 4004,
+  REPLACED: 4005,
 } as const;
 
 export type ToolAnnouncement = Pick<
@@ -30,24 +16,10 @@ export type ToolAnnouncement = Pick<
   "name" | "description" | "inputSchema" | "annotations"
 >;
 
-export type ControlMessage =
-  | { type: "ready"; peerConnected: boolean }
-  | { type: "peer_connected" }
-  | { type: "peer_disconnected" };
-
 export type ClientInfo = { name: string; version?: string };
 
-export interface Bridge {
-  getTools(): ToolAnnouncement[] | null;
-  onToolsChanged(handler: () => void): void;
-  call(name: string, input: Record<string, unknown>): Promise<unknown>;
-  setClientInfo(info: ClientInfo): void;
-}
-
-export const createLog =
-  (prefix: string) =>
-  (msg: string): void =>
-    console.error(`[${prefix}] ${msg}`);
+// stdout carries the MCP protocol, so logs go to stderr.
+export const log = (msg: string): void => console.error(`[editor-mcp] ${msg}`);
 
 export const numEnv = (name: string): number | undefined => {
   const raw = process.env[name];

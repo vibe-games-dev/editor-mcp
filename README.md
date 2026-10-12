@@ -2,61 +2,56 @@
 
 Use MCP clients like Claude Code or Codex with the [vibe-games.ai](https://vibe-games.ai) browser editor to build games — your coding assistant drives the editor directly through its tools.
 
-Several editor tabs and several MCP clients can run at once and stay paired by a per-tab session token, without their tool calls crossing over.
+Each MCP client runs its own server process and connects to one editor tab with a pairing code. Several agents can run at the same time.
 
 ## Setup
 
-1. Open the [vibe-games.ai editor](https://vibe-games.ai/editor/playground).
-2. Open **Settings**, go to the **AI** tab, and turn on **Local MCP Server**.
-3. Pick your agent — **Claude** or **Codex**.
-4. Run the two generated commands in your shell: the first installs the MCP server (once), the second starts a session with that tab's token.
-5. The **Connect Agent** badge in the chat header shows your agent with a green dot once it connects.
+1. Install the MCP server in your agent (once). See [MCP client config](#mcp-client-config).
+2. Open your project in the [vibe-games.ai editor](https://vibe-games.ai/editor/playground) and click **Connect agent**.
+3. Ask your agent to connect to the Vibe Games editor. It calls `connect_editor` and gives you a 6-digit pairing code.
+4. Enter the code in the **Connect agent** popup. The editor connects when you enter the last digit.
 
 For screenshots, browser support, and troubleshooting, see the [full setup guide](https://vibe-games.ai/docs/ai-setup/local-mcp).
 
-## MCP client config (reference)
+## How pairing works
 
-You normally don't write this by hand — the editor generates these commands for you with the token filled in (see [Setup](#setup)). It's here only so you know what's being added.
+- `connect_editor` starts a WebSocket server on `127.0.0.1`, on the first free port from `7777` to `7786`, and makes a pairing code such as `312-845`.
+- The first digit of the code selects the port. The other digits are the secret.
+- The server accepts connections only from the origin of `VIBEGAMES_EDITOR_URL`. A browser cannot change the `Origin` header, so other web pages cannot connect.
+- After 5 incorrect codes, the code locks. Call `connect_editor` again to get a new code.
+- The code stays valid while the server process runs, so a reloaded editor tab connects again. When a second tab connects with the code, the first tab disconnects.
 
-The only required value is `VIBEGAMES_MCP_SESSION`, generated per editor tab.
+## MCP client config
 
 ### Claude Code
 
-```json
-{
-  "mcpServers": {
-    "vibe-games-editor": {
-      "command": "npx",
-      "args": ["-y", "@vibegames/editor-mcp"],
-      "env": {
-        "VIBEGAMES_MCP_SESSION": "${VIBEGAMES_MCP_SESSION}"
-      }
-    }
-  }
-}
+```bash
+claude mcp add vibe-games-editor -- npx -y @vibegames/editor-mcp
 ```
 
 ### Codex
 
-```toml
-[mcp_servers.vibe-games-editor]
-command = "npx"
-args = ["-y", "@vibegames/editor-mcp"]
-env_vars = ["VIBEGAMES_MCP_SESSION"]
+```bash
+codex mcp add vibe-games-editor -- npx -y @vibegames/editor-mcp
 ```
 
-Then launch each session with the token from its editor tab:
+### opencode
 
 ```bash
-VIBEGAMES_MCP_SESSION='<token-from-editor>' codex
-VIBEGAMES_MCP_SESSION='<token-from-editor>' claude
+opencode mcp add vibe-games-editor -- npx -y @vibegames/editor-mcp
+```
+
+### Local development
+
+Set the editor URL to your development server:
+
+```bash
+claude mcp add vibe-games-editor --env VIBEGAMES_EDITOR_URL=http://localhost:3000 -- npx -y @vibegames/editor-mcp
 ```
 
 ## Configuration
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `VIBEGAMES_MCP_SESSION` | — (required) | per-tab pairing token |
-| `VIBEGAMES_MCP_PORT` | `7777` | only set if the default port is taken |
-| `VIBEGAMES_MCP_HOST` | `127.0.0.1` | loopback only |
+| `VIBEGAMES_EDITOR_URL` | `https://vibe-games.ai` | the only origin that can connect |
 | `VIBEGAMES_MCP_CALL_TIMEOUT_MS` | `60000` | per tool call |
